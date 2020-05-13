@@ -35,6 +35,9 @@ If you have questions concerning this license or the applicable additional terms
 #include "idlib/Str.h"
 #include "idlib/Parser.h"
 
+#include <cstdint>
+#include <cinttypes>
+
 /*
 ===============================================================================
 
@@ -98,7 +101,7 @@ public:
 
 	void				Set( const char *key, const char *value );
 	void				SetFloat( const char *key, float val );
-	void				SetInt( const char *key, int val );
+	void				SetInt( const char *key, int64_t val );
 	void				SetBool( const char *key, bool val );
 	void				SetVector( const char *key, const idVec3 &val );
 	void				SetVec2( const char *key, const idVec2 &val );
@@ -109,7 +112,7 @@ public:
 						// these return default values of 0.0, 0 and false
 	const char *		GetString( const char *key, const char *defaultString = "" ) const;
 	float				GetFloat( const char *key, const char *defaultString = "0" ) const;
-	int					GetInt( const char *key, const char *defaultString = "0" ) const;
+	int64_t			    GetInt( const char *key, const char *defaultString = "0" ) const;
 	bool				GetBool( const char *key, const char *defaultString = "0" ) const;
 	idVec3				GetVector( const char *key, const char *defaultString = NULL ) const;
 	idVec2				GetVec2( const char *key, const char *defaultString = NULL ) const;
@@ -195,8 +198,8 @@ ID_INLINE void idDict::SetFloat( const char *key, float val ) {
 	Set( key, va( "%f", val ) );
 }
 
-ID_INLINE void idDict::SetInt( const char *key, int val ) {
-	Set( key, va( "%i", val ) );
+ID_INLINE void idDict::SetInt( const char *key, int64_t val ) {
+	Set( key, va( "%" PRId64, val ) );
 }
 
 ID_INLINE void idDict::SetBool( const char *key, bool val ) {
@@ -255,8 +258,8 @@ ID_INLINE float idDict::GetFloat( const char *key, const char *defaultString ) c
 	return atof( GetString( key, defaultString ) );
 }
 
-ID_INLINE int idDict::GetInt( const char *key, const char *defaultString ) const {
-	return atoi( GetString( key, defaultString ) );
+ID_INLINE int64_t idDict::GetInt( const char *key, const char *defaultString ) const {
+    return _atoi64(GetString( key, defaultString ) );
 }
 
 ID_INLINE bool idDict::GetBool( const char *key, const char *defaultString ) const {

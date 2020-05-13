@@ -8,3 +8,7 @@
 
 /dhewm*
 /*-releases/
+
+# CLion insists on putting the build directory underneath the cmakefile, rather
+# than at the project root.
+/neo/cmake-build*

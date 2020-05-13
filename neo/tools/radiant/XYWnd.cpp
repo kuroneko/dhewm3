@@ -2098,7 +2098,7 @@ bool MergeMenu(CMenu * pMenuDestination, const CMenu * pMenuAdd, bool bTopLevel 
 			HMENU hNewMenu = NewPopupMenu.GetSafeHmenu();
 			if (pMenuDestination->InsertMenu(iInsertPosDefault,
 				MF_BYPOSITION | MF_POPUP | MF_ENABLED,
-				(UINT)hNewMenu, sMenuAddString ))
+				(UINT_PTR)hNewMenu, sMenuAddString ))
 			{
 				// don't forget to correct the item count
 				iMenuDestItemCount++;
@@ -2169,7 +2169,7 @@ void CXYWnd::HandleDrop() {
 					if (pChild) {
 						pMakeEntityPop->AppendMenu (
 							MF_POPUP,
-							reinterpret_cast < unsigned int > (pChild->GetSafeHmenu()),
+							reinterpret_cast < UINT_PTR > (pChild->GetSafeHmenu()),
 							strActive
 						);
 						g_ptrMenus.Add(pChild);
@@ -2188,7 +2188,7 @@ void CXYWnd::HandleDrop() {
 				if (pChild) {
 					pMakeEntityPop->AppendMenu (
 						MF_POPUP,
-						reinterpret_cast < unsigned int > (pChild->GetSafeHmenu()),
+						reinterpret_cast < UINT_PTR > (pChild->GetSafeHmenu()),
 						strActive
 					);
 					g_ptrMenus.Add(pChild);
@@ -2204,7 +2204,7 @@ void CXYWnd::HandleDrop() {
 		if ( pMakeEntityPop != &m_mnuDrop ) {
 			m_mnuDrop.AppendMenu (
 				MF_POPUP,
-				reinterpret_cast < unsigned int > (pMakeEntityPop->GetSafeHmenu()),
+				reinterpret_cast < UINT_PTR > (pMakeEntityPop->GetSafeHmenu()),
 				"Make Entity"
 			);
 		}
@@ -2734,7 +2734,7 @@ bool CXYWnd::XY_MouseMoved(int x, int y, int buttons) {
 
 /*
  =======================================================================================================================
-	DRAWING £
+	DRAWING ï¿½
 	XY_DrawGrid
  =======================================================================================================================
  */
@@ -3306,7 +3306,7 @@ bool FilterBrush(brush_t *pb) {
 
 /*
  =======================================================================================================================
-	PATH LINES £
+	PATH LINES ï¿½
 	DrawPathLines Draws connections between entities. Needs to consider all entities, not just ones on screen, because
 	the lines can be visible when neither end is. Called for both camera view and xy view.
  =======================================================================================================================
@@ -4366,7 +4366,7 @@ idVec3 &CXYWnd::RotateOrigin() {
  =======================================================================================================================
  =======================================================================================================================
  */
-void CXYWnd::OnTimer(UINT nIDEvent) {
+void CXYWnd::OnTimer(UINT_PTR nIDEvent) {
 	if (nIDEvent == 100) {
 		int nDim1 = (m_nViewType == YZ) ? 1 : 0;
 		int nDim2 = (m_nViewType == XY) ? 1 : 2;

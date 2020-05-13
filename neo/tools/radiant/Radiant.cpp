@@ -62,7 +62,8 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CRadiantApp construction
 
-CRadiantApp::CRadiantApp()
+CRadiantApp::CRadiantApp():
+    CWinApp()
 {
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
@@ -123,12 +124,13 @@ void RadiantInit( void ) {
 		Sys_GrabMouseCursor( false );
 
 		g_DoomInstance = win32.hInstance;
-		CWinApp* pApp = AfxGetApp();
-		CWinThread *pThread = AfxGetThread();
 
-		InitAfx();
+        InitAfx();
 
-		// App global initializations (rare)
+        CWinApp* pApp = AfxGetApp();
+        CWinThread *pThread = AfxGetThread();
+
+        // App global initializations (rare)
 		pApp->InitApplication();
 
 		// Perform specific initializations
@@ -193,14 +195,16 @@ bool g_bBuildList = false;
 
 BOOL CRadiantApp::InitInstance()
 {
-  //g_hOpenGL32 = ::LoadLibrary("opengl32.dll");
-	// AfxEnableControlContainer();
+    CWinApp::InitInstance();
+
+    //g_hOpenGL32 = ::LoadLibrary("opengl32.dll");
+	//AfxEnableControlContainer();
 
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	//  of your final executable, you should remove from the following
 	//  the specific initialization routines you do not need.
-  //AfxEnableMemoryTracking(FALSE);
+    //AfxEnableMemoryTracking(FALSE);
 
 #ifdef _AFXDLL
 	//Enable3dControls();			// Call this when using MFC in a shared DLL

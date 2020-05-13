@@ -262,7 +262,7 @@ public:
 			data = guiDict->GetInt(GetName());
 		}
 	}
-	int &operator=(	const int &other ) {
+	int64_t &operator=(	const int64_t &other ) {
 		data = other;
 		if (guiDict) {
 			guiDict->SetInt(GetName(), data);
@@ -274,11 +274,11 @@ public:
 		data = other.data;
 		return *this;
 	}
-	operator int () const {
+	operator int64_t () const {
 		return data;
 	}
 	virtual void Set(const char *val) {
-		data = atoi(val);;
+		data = _atoi64(val);;
 		if (guiDict) {
 			guiDict->SetInt(GetName(), data);
 		}
@@ -308,7 +308,7 @@ public:
 	virtual float x( void ) const { assert( false ); return 0.0f; };
 
 protected:
-	int data;
+	int64_t data;
 };
 
 class idWinFloat : public idWinVar {

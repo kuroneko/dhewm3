@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
-project(dhewm3)
+cmake_minimum_required(VERSION 3.15)
+project(dhewm3 LANGUAGES C CXX RC)
 
-# TODO
+
+	# TODO
 
 # osx: place game .dylib's in the bundle (next to the binary)
 # osx: -weak_framework ?
@@ -113,54 +114,72 @@ if(CMAKE_MAJOR_VERSION LESS 3 OR ( CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_V
 #	message(STATUS "Using CMake >= 3.8, supports source_group(TREE ...)")
 endif()
 
-# libs
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
 
-find_package(JPEG REQUIRED)
-include_directories(${JPEG_INCLUDE_DIR})
+option(USE_CONAN "Use the Conan Packaging system to get our dependencies" OFF)
 
-set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${JPEG_LIBRARY})
+if(USE_CONAN)
+	include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	conan_basic_setup(TARGETS)
 
-find_package(OGG REQUIRED)
-include_directories(${OGG_INCLUDE_DIR})
-
-find_package(Vorbis REQUIRED)
-include_directories(${VORBIS_INCLUDE_DIR})
-
-find_package(VorbisFile REQUIRED)
-include_directories(${VORBISFILE_INCLUDE_DIR})
-
-find_package(OpenAL REQUIRED)
-include_directories(${OPENAL_INCLUDE_DIR})
-
-if (SDL2)
-	# skip SDL2main
-	if(APPLE OR WIN32)
-		set(SDL2_BUILDING_LIBRARY TRUE)
-	endif()
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-	set(SDLx_LIBRARY ${SDL2_LIBRARY})
-else()
-	# skip SDLmain
-	if(APPLE OR WIN32)
-		set(SDL_BUILDING_LIBRARY TRUE)
-	endif()
-	find_package(SDL REQUIRED)
-	include_directories(${SDL_INCLUDE_DIR})
-	set(SDLx_LIBRARY ${SDL_LIBRARY})
-endif()
-
-find_package(CURL QUIET)
-if(CURL_FOUND)
+	set(ZLIB_LIBRARY CONAN_PKG::zlib)
+	set(JPEG_LIBRARY CONAN_PKG::libjpeg)
+	set(OGG_LIBRARY CONAN_PKG::ogg)
+	set(VORBIS_LIBRARIES CONAN_PKG::vorbis)
+	set(OPENAL_LIBRARY CONAN_PKG::openal)
+	set(SDLx_LIBRARY CONAN_PKG::sdl2)
 	set(ID_ENABLE_CURL ON)
-	include_directories(${CURL_INCLUDE_DIR})
+	set(CURL_LIBRARY CONAN_PKG::libcurl)
+
 else()
-	message(STATUS "libcurl not found, server downloads won't be available")
-	set(ID_ENABLE_CURL OFF)
-	set(CURL_LIBRARY "")
+	# libs
+	find_package(ZLIB REQUIRED)
+	include_directories(${ZLIB_INCLUDE_DIRS})
+
+	find_package(JPEG REQUIRED)
+	include_directories(${JPEG_INCLUDE_DIR})
+
+	set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
+	set(CMAKE_REQUIRED_LIBRARIES ${JPEG_LIBRARY})
+
+	find_package(OGG REQUIRED)
+	include_directories(${OGG_INCLUDE_DIR})
+
+	find_package(Vorbis REQUIRED)
+	include_directories(${VORBIS_INCLUDE_DIR})
+
+	find_package(VorbisFile REQUIRED)
+	include_directories(${VORBISFILE_INCLUDE_DIR})
+
+	find_package(OpenAL REQUIRED)
+	include_directories(${OPENAL_INCLUDE_DIR})
+
+	if (SDL2)
+		# skip SDL2main
+		if(APPLE OR WIN32)
+			set(SDL2_BUILDING_LIBRARY TRUE)
+		endif()
+		find_package(SDL2 REQUIRED)
+		include_directories(${SDL2_INCLUDE_DIR})
+		set(SDLx_LIBRARY ${SDL2_LIBRARY})
+	else()
+		# skip SDLmain
+		if(APPLE OR WIN32)
+			set(SDL_BUILDING_LIBRARY TRUE)
+		endif()
+		find_package(SDL REQUIRED)
+		include_directories(${SDL_INCLUDE_DIR})
+		set(SDLx_LIBRARY ${SDL_LIBRARY})
+	endif()
+
+	find_package(CURL QUIET)
+	if(CURL_FOUND)
+		set(ID_ENABLE_CURL ON)
+		include_directories(${CURL_INCLUDE_DIR})
+	else()
+		message(STATUS "libcurl not found, server downloads won't be available")
+		set(ID_ENABLE_CURL OFF)
+		set(CURL_LIBRARY "")
+	endif()
 endif()
 
 if(MSVC)
@@ -255,7 +274,7 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		set(sys_libs ${sys_libs} ${EXECINFO_LIBRARIES})
 	endif()
 elseif(MSVC)
-	add_definitions(/MP) # parallel build (use all cores, or as many as configured in VS)
+	#add_definitions(/MP) # parallel build (use all cores, or as many as configured in VS)
 	
 	add_compile_options(/W4)
 	add_compile_options(/we4840) # treat as error when passing a class to a vararg-function (probably printf-like)
@@ -271,8 +290,20 @@ elseif(MSVC)
 	add_definitions(-D_ALLOW_KEYWORD_MACROS) # because of the "#define private public" and "#define protected public" in TypeInfo.cpp
 	set(CMAKE_C_FLAGS_DEBUG "-D_DEBUG /Od /Zi /MDd")
 	set(CMAKE_C_FLAGS_RELEASE "/Ox /Oy /MD")
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Ox /Oy /Zi /MD")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "/Ox /Oy /Zi /MDd")
 	set(CMAKE_C_FLAGS_MINSIZEREL "/Ox /Oy /Os /MD")
+
+	if(NOT DEFINED CONAN_LINK_RUNTIME AND DEFINED CONAN_SETTINGS_COMPILER_RUNTIME)
+		message(WARNING "Forcing MSVC runtime based on conan profile")
+		# this means Conan is not running the build, so we need to fix our linker flags ourself.... although we can probably cheat...
+		set(CONAN_LINK_RUNTIME "/${CONAN_SETTINGS_COMPILER_RUNTIME}")
+		conan_set_vs_runtime()
+
+		# finally, warn us about the flags.
+		foreach(FLAG CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO)
+			message(STATUS "Compiler Flags ${FLAG} is set to ${${FLAG}}")
+		endforeach()
+	endif()
 else()
 	message(FATAL_ERROR "Unsupported compiler")
 endif()
@@ -823,7 +854,7 @@ if (TOOLS AND MFC_FOUND AND MSVC)
 		"tools/edit_gui_common.h"
 		)
 	SET(CMAKE_MFC_FLAG 2)
-	set(TOOLS_DEFINES "ID_ALLOW_TOOLS;__AFXDLL")
+	add_compile_definitions(ID_ALLOW_TOOLS _AFXDLL)
 else()
 	set(src_editor_tools "tools/edit_stub.cpp" "tools/edit_public.h")
 endif()
@@ -932,6 +963,9 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR})
 
 add_library(idlib STATIC ${src_idlib})
+target_link_libraries(idlib PUBLIC
+		${SDLx_LIBRARY}
+		${ZLIB_LIBRARY})
 if (AROS)
 	add_library(dll STATIC ${src_arosdll})
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "i386")
@@ -972,6 +1006,7 @@ if(CORE)
 		${ZLIB_LIBRARY}
 		${SDLx_LIBRARY}
 		${sys_libs}
+		${TOOLS_LIBS}
 	)
 
 	if(NOT APPLE AND NOT WIN32)

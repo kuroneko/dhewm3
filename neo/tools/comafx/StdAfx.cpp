@@ -52,9 +52,12 @@ InitAfx
 */
 void InitAfx( void ) {
 	if ( !afxInitialized ) {
-		AfxWinInit( win32.hInstance, NULL, "", SW_SHOW );
+		afxInitialized = AfxWinInit( ::GetModuleHandle(NULL), NULL, "", SW_SHOW );
+		if (!afxInitialized) {
+		    Sys_Error("AFX Failed to Initialise");
+		    return;
+		}
 		AfxInitRichEdit();
-		afxInitialized = true;
 	}
 }
 
@@ -108,7 +111,7 @@ BOOL DefaultOnToolTipNotify( const toolTip_t *toolTips, UINT id, NMHDR *pNMHDR, 
 
 	*pResult = 0;
 
-	UINT nID = pNMHDR->idFrom;
+	UINT_PTR nID = pNMHDR->idFrom;
 	if ( pTTTA->uFlags & TTF_IDISHWND ) {
 		// idFrom is actually the HWND of the tool
 		nID = ::GetDlgCtrlID((HWND)nID);
